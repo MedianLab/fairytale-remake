@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>전래·명작 동화 리메이크하기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#1a1a2e;--paper:#fdf8f0;--accent:#c84b31;--gold:#e8a217;--teal:#2d7d6f;--soft:#f5efe6;--border:#d4c5a9;--shadow:rgba(26,26,46,.12);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans KR',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:radial-gradient(circle at 20% 20%,rgba(200,75,49,.05) 0%,transparent 50%),
+    radial-gradient(circle at 80% 80%,rgba(45,125,111,.05) 0%,transparent 50%),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23d4c5a9' fill-opacity='.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+  .container{max-width:860px;margin:0 auto;padding:32px 20px 60px;position:relative;z-index:1;}
+
+  header{text-align:center;margin-bottom:40px;padding-bottom:32px;border-bottom:2px solid var(--border);}
+  .header-badge{display:inline-block;background:var(--accent);color:white;font-size:11px;font-weight:700;letter-spacing:2px;padding:4px 14px;border-radius:2px;margin-bottom:16px;text-transform:uppercase;}
+  header h1{font-family:'Noto Serif KR',serif;font-size:clamp(26px,5vw,40px);font-weight:900;line-height:1.3;margin-bottom:10px;}
+  header h1 span{color:var(--accent);}
+  header p{color:#6b6b7b;font-size:15px;font-weight:500;}
+
+  .step-indicator{display:flex;align-items:center;justify-content:center;margin-bottom:36px;}
+  .step-dot{width:32px;height:32px;border-radius:50%;background:var(--soft);border:2px solid var(--border);color:#999;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .3s;flex-shrink:0;}
+  .step-dot.active{background:var(--accent);border-color:var(--accent);color:white;}
+  .step-dot.done{background:var(--teal);border-color:var(--teal);color:white;}
+  .step-line{width:50px;height:2px;background:var(--border);flex-shrink:0;}
+  .step-line.done{background:var(--teal);}
+
+  .card{background:white;border:1.5px solid var(--border);border-radius:12px;padding:32px;box-shadow:0 4px 20px var(--shadow);}
+  .card-title{font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+  .card-title::before{content:'';display:block;width:4px;height:22px;background:var(--accent);border-radius:2px;flex-shrink:0;}
+
+  /* 검색창 */
+  .search-wrap{position:relative;margin-bottom:8px;}
+  .search-wrap input{width:100%;padding:13px 48px 13px 46px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:'Noto Sans KR',sans-serif;background:var(--soft);outline:none;transition:all .2s;}
+  .search-wrap input:focus{border-color:var(--accent);background:white;box-shadow:0 0 0 3px rgba(200,75,49,.08);}
+  .search-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none;}
+  .clear-btn{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;color:#aaa;cursor:pointer;line-height:1;display:none;}
+  .search-hint{font-size:12px;color:#999;margin-bottom:14px;padding-left:2px;min-height:17px;}
+  .search-hint b{color:var(--accent);}
+
+  /* 동화 목록 - 기본 6종 */
+  .tale-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;}
+  .tale-item{display:flex;align-items:center;gap:12px;padding:13px 14px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;background:var(--soft);transition:all .2s;}
+  .tale-item:hover{border-color:var(--accent);background:white;transform:translateY(-2px);box-shadow:0 4px 12px var(--shadow);}
+  .tale-item .tale-emoji{width:46px;height:46px;border-radius:8px;background:white;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+  .tale-item h4{font-weight:700;font-size:13.5px;margin-bottom:3px;color:var(--ink);}
+  .tale-item p{font-size:11.5px;color:#888;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .tale-item.custom-add .tale-emoji{background:#fff0ed;border-color:#ffd0c8;}
+  .tale-item.custom-add h4{color:var(--accent);}
+  .tale-item.ai-found .tale-emoji{background:#eef6fb;border-color:#b3d4e8;}
+
+  /* AI 검색 */
+  .ai-search-wrap{margin-top:16px;}
+  .ai-divider{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .ai-divider::before,.ai-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+  .ai-divider span{font-size:12px;color:#aaa;white-space:nowrap;}
+  .ai-search-btn{width:100%;padding:11px;background:#eef6fb;border:1.5px solid #b3d4e8;border-radius:10px;font-family:'Noto Sans KR',sans-serif;font-size:13.5px;font-weight:700;color:#2f6b8a;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;}
+  .ai-search-btn:hover:not(:disabled){background:#dff0fa;border-color:#3a8abf;}
+  .ai-search-btn:disabled{opacity:.55;cursor:not-allowed;}
+  .ai-result-title{font-size:12px;font-weight:700;color:#3a8abf;letter-spacing:.5px;margin:14px 0 8px;}
+
+  /* 이슈 */
+  .issue-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:28px;}
+  .issue-item{padding:18px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;background:var(--soft);transition:all .2s;display:flex;align-items:flex-start;gap:12px;}
+  .issue-item:hover{border-color:var(--accent);background:white;}
+  .issue-item.selected{border-color:var(--accent);background:#fff5f3;box-shadow:0 0 0 3px rgba(200,75,49,.12);}
+  .issue-icon{font-size:28px;flex-shrink:0;}
+  .issue-item h3{font-weight:700;font-size:14px;margin-bottom:3px;}
+  .issue-item p{font-size:12px;color:#777;line-height:1.5;}
+
+  /* 설계 예시 로딩 */
+  .example-loading{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#eef6fb;border:1.5px solid #b3d4e8;border-radius:10px;margin-bottom:18px;font-size:13px;color:#2f6b8a;font-weight:500;}
+  .mini-spinner{width:17px;height:17px;border:2.5px solid #b3d4e8;border-top-color:#3a8abf;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
+
+  /* 설계 폼 */
+  .planning-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px;}
+  @media(max-width:600px){.planning-grid{grid-template-columns:1fr;}}
+  .planning-grid>div:last-child{grid-column:1/-1;}
+  .form-group label{display:block;font-size:13px;font-weight:700;margin-bottom:7px;}
+  .form-group label span{color:var(--accent);margin-right:3px;}
+  .form-group .field-wrap{position:relative;}
+  .form-group textarea{position:relative;z-index:1;width:100%;height:108px;padding:11px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Noto Sans KR',sans-serif;font-size:13.5px;background:transparent;resize:none;outline:none;transition:border-color .2s;line-height:1.65;color:var(--ink);}
+  .form-group textarea:focus{border-color:var(--accent);}
+  .field-bg{position:absolute;inset:0;background:var(--soft);border-radius:8px;z-index:0;transition:background .2s;}
+  .form-group textarea:focus+.field-bg{background:white;}
+  .example-hint{position:absolute;top:0;left:0;right:0;bottom:0;padding:33px 12px 11px;font-size:13.5px;line-height:1.65;color:rgba(58,138,191,.48);pointer-events:none;white-space:pre-wrap;word-break:break-word;border-radius:8px;overflow:hidden;z-index:0;transition:opacity .15s;}
+
+  /* 배지·버튼 */
+  .badge-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px;}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:5px 13px;border-radius:4px;font-size:13px;font-weight:700;}
+  .badge.red{background:#fff0ed;color:var(--accent);border:1px solid #ffd0c8;}
+  .badge.green{background:#edf7f5;color:var(--teal);border:1px solid #b8e0d8;}
+  .btn-row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;}
+  .btn{padding:12px 26px;border-radius:8px;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:15px;cursor:pointer;border:none;transition:all .2s;}
+  .btn-primary{background:var(--accent);color:white;}
+  .btn-primary:hover{background:#a83828;transform:translateY(-1px);}
+  .btn-primary:disabled{background:#ccc;cursor:not-allowed;transform:none;}
+  .btn-secondary{background:white;color:var(--ink);border:1.5px solid var(--border);}
+  .btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-teal{background:var(--teal);color:white;}
+  .btn-teal:hover{background:#236055;transform:translateY(-1px);}
+
+  /* 로딩 오버레이 */
+  .loading-overlay{position:fixed;inset:0;background:rgba(253,248,240,.95);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+  .spinner{width:52px;height:52px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-text{font-family:'Noto Serif KR',serif;font-size:18px;font-weight:700;text-align:center;max-width:300px;line-height:1.6;}
+
+  /* 결과 */
+  .result-header{background:var(--ink);color:white;border-radius:12px 12px 0 0;padding:32px;text-align:center;}
+  .result-title-input{background:transparent;border:none;border-bottom:2px solid rgba(255,255,255,.3);color:white;font-family:'Noto Serif KR',serif;font-size:clamp(20px,4vw,30px);font-weight:900;text-align:center;width:100%;outline:none;padding:8px 0;margin-bottom:16px;}
+  .result-title-input:focus{border-bottom-color:var(--gold);}
+  .result-body{background:white;padding:36px;border:1.5px solid var(--border);border-top:none;}
+  .result-body article p{font-size:16px;line-height:1.9;color:#333;margin-bottom:20px;font-family:'Noto Serif KR',serif;}
+  .message-box{background:linear-gradient(135deg,#fff9f0,#fef3e2);border:1.5px solid #f5d98a;border-left:4px solid var(--gold);border-radius:8px;padding:18px 22px;margin-bottom:28px;}
+  .message-box h4{font-weight:700;color:#8a6200;margin-bottom:7px;font-size:13px;}
+  .message-box p{font-size:15px;line-height:1.7;font-weight:500;margin:0;}
+  .discussion-section h4{font-family:'Noto Serif KR',serif;font-size:18px;font-weight:700;margin-bottom:18px;padding-bottom:10px;border-bottom:1.5px solid var(--border);}
+  .discussion-item{margin-bottom:22px;}
+  .discussion-q{font-weight:700;font-size:14px;margin-bottom:9px;line-height:1.6;}
+  .discussion-q span{color:var(--accent);margin-right:5px;}
+  .discussion-item textarea{width:100%;height:85px;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Noto Sans KR',sans-serif;font-size:13.5px;background:var(--soft);resize:none;outline:none;transition:border-color .2s;}
+  .discussion-item textarea:focus{border-color:var(--teal);background:white;}
+  /* 삽화 */
+  #storyIllustration{margin-bottom:24px;}
+  .illust-loading{display:flex;align-items:center;gap:10px;padding:20px;background:#f8f4ef;border:1.5px dashed var(--border);border-radius:10px;font-size:13px;color:#999;}
+  .illust-wrap{border-radius:12px;overflow:hidden;border:1.5px solid var(--border);box-shadow:0 2px 12px var(--shadow);}
+  .illust-wrap svg{width:100%;height:auto;display:block;}
+
+  .result-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:26px;}
+  .divider{height:1.5px;background:var(--border);margin:26px 0;}
+  .hidden{display:none!important;}
+  .fade-in{animation:fadeIn .4s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;}
+    #printArea{position:fixed;top:0;left:0;width:100%;background:white;padding:20px;}
+    .illust-wrap svg{max-height:280px;}
+    .result-body article p{font-size:13px;line-height:1.8;}
+    .discussion-item textarea{border:1px solid #ccc!important;height:60px;visibility:visible;}
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay hidden" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">AI가 이야기를 재해석하고 있습니다...</div>
+</div>
+
+<div class="container">
+  <header>
+    <div class="header-badge">AI 스토리텔링 프로젝트</div>
+    <h1>전래·명작 동화<br><span>리메이크하기</span></h1>
+    <p>사회 문제를 해결하는 창의적인 이야기를 함께 만들어요</p>
+  </header>
+
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot1">1</div><div class="step-line" id="line1"></div>
+    <div class="step-dot" id="dot2">2</div><div class="step-line" id="line2"></div>
+    <div class="step-dot" id="dot3">3</div><div class="step-line" id="line3"></div>
+    <div class="step-dot" id="dot4">4</div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div id="step1" class="fade-in">
+    <div class="card">
+      <div class="card-title">리메이크할 동화를 선택하세요</div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="동화 제목으로 검색하세요 (예: 심청전, 춘향전, 라푼젤...)" autocomplete="off"/>
+        <button class="clear-btn" id="clearBtn" onclick="clearSearch()">✕</button>
+      </div>
+      <div class="search-hint" id="searchHint">자주 쓰는 동화 6종 · 제목으로 검색하거나 AI로 찾을 수 있어요</div>
+      <div class="tale-grid" id="taleGrid"></div>
+      <div id="aiSearchArea"></div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div id="step2" class="hidden fade-in">
+    <div class="card">
+      <div class="badge-row" id="badge2"></div>
+      <div class="card-title">어떤 디지털 사회 문제를 다룰까요?</div>
+      <div class="issue-grid" id="issueGrid"></div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goTo(1)">← 이전</button>
+        <button class="btn btn-primary" id="btn2next" disabled onclick="goTo(3)">설계하기 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div id="step3" class="hidden fade-in">
+    <div class="card">
+      <div class="badge-row" id="badge3"></div>
+      <div class="card-title">리메이크 동화 설계하기</div>
+      <div id="exampleLoading" class="example-loading hidden">
+        <div class="mini-spinner"></div>
+        <span>원작과 주제에 맞는 예시를 생성 중입니다... 입력창에 연하게 표시됩니다</span>
+      </div>
+      <div class="planning-grid">
+        <div class="form-group">
+          <label><span>Who</span> 등장인물</label>
+          <div class="field-wrap">
+            <textarea id="pWho" placeholder="리메이크된 주인공과 등장인물을 설명하세요..."></textarea>
+            <div class="field-bg"></div>
+            <div class="example-hint" id="hint_who"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label><span>When/Where</span> 배경</label>
+          <div class="field-wrap">
+            <textarea id="pWhen" placeholder="시대적·공간적 배경을 설정하세요..."></textarea>
+            <div class="field-bg"></div>
+            <div class="example-hint" id="hint_when"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label><span>What</span> 주요 사건 및 갈등</label>
+          <div class="field-wrap">
+            <textarea id="pWhat" placeholder="어떤 사건이 일어나나요?..."></textarea>
+            <div class="field-bg"></div>
+            <div class="example-hint" id="hint_what"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label><span>Why</span> 변화의 이유</label>
+          <div class="field-wrap">
+            <textarea id="pWhy" placeholder="왜 이런 방식으로 리메이크하나요?..."></textarea>
+            <div class="field-bg"></div>
+            <div class="example-hint" id="hint_why"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label><span>How</span> 해결 및 결말</label>
+          <div class="field-wrap">
+            <textarea id="pHow" placeholder="어떻게 문제가 해결되나요?..."></textarea>
+            <div class="field-bg"></div>
+            <div class="example-hint" id="hint_how"></div>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goTo(2)">← 이전</button>
+        <button class="btn btn-primary" onclick="handleGenerate()">리메이크 시작 ✨</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div id="step4" class="hidden fade-in">
+  <div id="printArea">
+    <div class="result-header">
+      <input class="result-title-input" id="resultTitle" type="text" value=""/>
+      <div class="badge-row" style="justify-content:center;" id="badge4"></div>
+    </div>
+    <div class="result-body">
+      <div id="storyIllustration"></div>
+      <article id="storyContent"></article>
+      <div class="divider"></div>
+      <div class="message-box"><h4>💡 우리가 배울 점</h4><p id="storyMessage"></p></div>
+      <div class="discussion-section">
+        <h4>🗣️ 토론 질문</h4>
+        <div id="discussionList"></div>
+      </div>
+    </div>
+  </div><!-- /printArea -->
+    <div class="result-actions">
+      <button class="btn btn-secondary" onclick="handleStartOver()">🔄 새로 만들기</button>
+      <button class="btn btn-teal" onclick="handleDownloadText()">💾 텍스트 저장</button>
+      <button class="btn btn-primary" onclick="handlePrint()">🖨️ 인쇄하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── 기본 표시 6종 ── */
+const DEFAULT_TALES = [
+  {id:'wolf_goats', title:'늑대와 일곱 마리 아기염소', emoji:'🐺', summary:'엄마가 집을 비운 사이 목소리를 변조한 늑대가 아기 염소들을 속이는 이야기'},
+  {id:'red_hood',   title:'빨간 모자',   emoji:'🧣', summary:'빨간 모자를 쓴 소녀가 할머니를 뵈러 가다 꾀 많은 늑대를 만나는 이야기'},
+  {id:'simcheong',  title:'심청전',       emoji:'🌊', summary:'눈먼 아버지를 위해 인당수에 몸을 던진 효녀 심청의 이야기'},
+  {id:'heungbu',    title:'흥부와 놀부',  emoji:'🎃', summary:'착한 흥부는 제비 덕에 복을 받고, 욕심쟁이 놀부는 벌을 받는 이야기'},
+  {id:'cinderella', title:'신데렐라',     emoji:'👠', summary:'계모와 언니들에게 구박받던 소녀가 요정의 도움으로 무도회에 가는 이야기'},
+  {id:'kongjwi',    title:'콩쥐팥쥐',    emoji:'👟', summary:'착한 콩쥐가 계모와 팥쥐의 구박을 이겨내고 행복을 찾는 이야기'},
+];
+
+/* ── 전체 DB (검색용 35종) ── */
+const ALL_TALES = [
+  ...DEFAULT_TALES,
+  {id:'chunhyang',  title:'춘향전',       emoji:'🎀', summary:'신분을 초월한 이몽룡과 성춘향의 사랑과 절개 이야기'},
+  {id:'sun_moon',   title:'해와 달이 된 오누이', emoji:'☀️', summary:'호랑이에게 쫓기던 오누이가 하늘로 올라가 해와 달이 된 이야기'},
+  {id:'rabbit',     title:'별주부전',     emoji:'🐢', summary:'토끼의 간을 구하러 간 자라와 꾀 많은 토끼의 지혜 대결'},
+  {id:'honggildog', title:'홍길동전',     emoji:'⚔️', summary:'서자 출신 홍길동이 의적이 되어 탐관오리와 싸우는 영웅 이야기'},
+  {id:'jangwha',    title:'장화홍련',     emoji:'🌹', summary:'억울하게 죽은 두 자매의 원혼이 진실을 밝히는 설화'},
+  {id:'dokkaebi',   title:'도깨비방망이', emoji:'🪄', summary:'혹부리 영감이 도깨비에게서 방망이를 얻어 부자가 되는 이야기'},
+  {id:'ondal',      title:'온달과 평강공주', emoji:'👑', summary:'바보 온달이 평강공주의 사랑으로 장군이 되는 이야기'},
+  {id:'namsaek',    title:'나무꾼과 선녀', emoji:'🪶', summary:'선녀의 날개옷을 숨긴 나무꾼과 하늘로 돌아간 선녀의 이야기'},
+  {id:'bari',       title:'바리데기',     emoji:'🌿', summary:'버려진 공주 바리가 부모를 살리기 위해 저승까지 다녀오는 설화'},
+  {id:'gumiho',     title:'구미호',       emoji:'🦊', summary:'사람이 되고 싶은 아홉 꼬리 여우와 인간의 갈등을 담은 민담'},
+  {id:'snow',       title:'백설공주',     emoji:'🍎', summary:'왕비의 질투로 쫓겨난 공주가 일곱 난쟁이와 함께 사랑으로 구원받는 이야기'},
+  {id:'sleeping',   title:'잠자는 숲속의 공주', emoji:'🌹', summary:'마녀의 저주로 깊은 잠에 빠진 공주가 왕자의 입맞춤으로 깨어나는 이야기'},
+  {id:'hansel',     title:'헨젤과 그레텔', emoji:'🏠', summary:'숲속에서 길을 잃은 남매가 마녀의 과자 집에서 위기를 극복하는 이야기'},
+  {id:'ugly',       title:'미운 오리 새끼', emoji:'🦢', summary:'따돌림 받던 오리가 아름다운 백조로 성장하는 이야기'},
+  {id:'mermaid',    title:'인어공주',     emoji:'🧜', summary:'인간 세계를 동경한 인어공주가 목소리를 바꾸고 사랑을 찾는 이야기'},
+  {id:'pinocchio',  title:'피노키오',     emoji:'🪵', summary:'거짓말을 하면 코가 길어지는 나무 인형이 진짜 아이가 되고 싶어하는 이야기'},
+  {id:'rapunzel',   title:'라푼젤',       emoji:'👩', summary:'탑에 갇힌 긴 머리 공주가 왕자의 도움으로 탈출하는 이야기'},
+  {id:'beauty',     title:'미녀와 야수',  emoji:'🌹', summary:'저주에 걸린 야수와 아름다운 소녀의 진정한 사랑 이야기'},
+  {id:'emperor',    title:'벌거벗은 임금님', emoji:'👑', summary:'사기꾼 재단사에게 속은 임금님이 투명한 옷을 입고 행진하는 이야기'},
+  {id:'thumbelina', title:'엄지공주',     emoji:'🌷', summary:'엄지손가락만 한 작은 소녀가 모험을 거쳐 꽃의 나라 왕자와 결혼하는 이야기'},
+  {id:'puss',       title:'장화 신은 고양이', emoji:'🐱', summary:'영리한 고양이가 주인을 후작으로 만들고 공주와 결혼시키는 이야기'},
+  {id:'matchgirl',  title:'성냥팔이 소녀', emoji:'🕯️', summary:'추운 겨울밤 성냥을 팔며 꿈을 꾸던 가난한 소녀의 안타까운 이야기'},
+  {id:'ants',       title:'개미와 베짱이', emoji:'🐜', summary:'부지런히 일한 개미와 노래만 하던 베짱이의 상반된 겨울나기 이야기'},
+];
+
+const SOCIAL_ISSUES = [
+  {id:'deepfake',      label:'딥페이크 & 딥보이스', desc:'AI 기술을 악용한 가짜 영상 및 목소리 생성 문제', icon:'👤'},
+  {id:'phishing',      label:'보이스피싱',           desc:'타인을 속여 금전적 이득을 취하는 통신 사기 범죄', icon:'📞'},
+  {id:'fakenews',      label:'허위정보 유포',         desc:'사실이 아닌 정보를 고의적으로 유포하는 가짜뉴스 문제', icon:'📢'},
+  {id:'digital_crime', label:'디지털 성범죄',         desc:'온라인 공간에서의 성적 착취물 제작 및 유포 문제', icon:'🚫'},
+  {id:'privacy',       label:'초상권 & 프라이버시',   desc:'개인의 얼굴 사진 무단 도용 및 사생활 침해 문제', icon:'📸'},
+  {id:'copyright',     label:'저작권 위반',           desc:'타인의 창작물을 무단으로 복제하거나 사용하는 행위', icon:'🎨'},
+];
+
+let selectedTale=null, selectedIssue=null, currentResult=null, currentExamples=null;
+let aiSearching=false;
+
+/* ── 동화 카드 HTML ── */
+function taleCard(t, extraClass='') {
+  return `<div class="tale-item ${extraClass}" onclick='selectTaleObj(${JSON.stringify(t)})'>
+    <div class="tale-emoji">${t.emoji||'📖'}</div>
+    <div><h4>${t.title}</h4><p>${t.summary}</p></div>
+  </div>`;
+}
+
+/* ── 기본 렌더 (6종) ── */
+function renderDefault() {
+  document.getElementById('taleGrid').innerHTML = DEFAULT_TALES.map(t=>taleCard(t)).join('');
+  document.getElementById('searchHint').innerHTML = `자주 쓰는 동화 <b>6종</b> · 검색창에 입력하면 더 많은 동화를 찾을 수 있어요`;
+  document.getElementById('aiSearchArea').innerHTML = '';
+}
+
+/* ── 검색 렌더 ── */
+function renderSearch(q) {
+  const hint = document.getElementById('searchHint');
+  const grid = document.getElementById('taleGrid');
+  const aiArea = document.getElementById('aiSearchArea');
+
+  // DB에서 필터
+  const found = ALL_TALES.filter(t => t.title.includes(q));
+
+  if (found.length > 0) {
+    hint.innerHTML = `<b>${found.length}개</b> 검색됨`;
+    grid.innerHTML = found.map(t=>taleCard(t)).join('') +
+      `<div class="tale-item custom-add" onclick="addCustomTale()">
+        <div class="tale-emoji">✏️</div>
+        <div><h4>"${q}" 직접 추가</h4><p>검색된 동화가 아니라면 직접 추가하세요</p></div>
+      </div>`;
+  } else {
+    hint.innerHTML = `목록에 없는 동화예요`;
+    grid.innerHTML = `<div class="tale-item custom-add" onclick="addCustomTale()">
+        <div class="tale-emoji">✏️</div>
+        <div><h4>"${q}" 직접 추가</h4><p>목록에 없는 동화를 직접 입력합니다</p></div>
+      </div>`;
+  }
+
+  // AI 검색 영역
+  aiArea.innerHTML = `
+    <div class="ai-search-wrap">
+      <div class="ai-divider"><span>목록에 없으면 AI로 찾아보세요</span></div>
+      <button class="ai-search-btn" id="aiBtn" onclick="searchByAI('${q.replace(/'/g,"\\'")}')">
+        ✨ AI로 "${q}" 검색하기
+      </button>
+      <div id="aiResultArea"></div>
+    </div>`;
+}
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('clearBtn').style.display = 'none';
+  renderDefault();
+}
+
+/* ── AI 검색 ── */
+async function searchByAI(q) {
+  if (aiSearching) return;
+  aiSearching = true;
+  const btn = document.getElementById('aiBtn');
+  if (!btn) return;
+  btn.disabled = true;
+  btn.innerHTML = `<div class="mini-spinner"></div> AI가 검색하고 있습니다...`;
+
+  const prompt = `"${q}"이라는 전래동화 또는 명작동화에 대해 알려주세요.
+이 제목과 정확히 일치하거나 유사한 동화를 1~3개 찾아주세요.
+코드블록 없이 순수 JSON 배열만 출력:
+[{"title":"동화 제목","emoji":"관련 이모지 1개","summary":"줄거리 한 문장 30자 이내"}]
+동화가 존재하지 않으면 빈 배열 [] 출력.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:400,
+        messages:[{role:'user', content:prompt}]})
+    });
+    const data = await res.json();
+    const text = data.content.map(c=>c.text||'').join('').trim();
+    const s = text.indexOf('['), e = text.lastIndexOf(']');
+    const results = JSON.parse(text.slice(s, e+1));
+
+    const area = document.getElementById('aiResultArea');
+    if (!area) return;
+
+    if (results.length === 0) {
+      btn.innerHTML = `✨ AI 검색 완료 — 일치하는 동화가 없습니다`;
+      btn.disabled = false;
+    } else {
+      btn.style.display = 'none';
+      area.innerHTML = `<div class="ai-result-title">✨ AI 검색 결과</div>` +
+        results.map(t => {
+          const obj = {id:'ai_'+Date.now(), title:t.title, emoji:t.emoji||'📖', summary:t.summary};
+          return taleCard(obj, 'ai-found');
+        }).join('');
+    }
+  } catch(err) {
+    console.error(err);
+    const btn2 = document.getElementById('aiBtn');
+    if (btn2) { btn2.disabled=false; btn2.innerHTML=`✨ AI로 "${q}" 다시 검색하기`; }
+  } finally {
+    aiSearching = false;
+  }
+}
+
+function selectTaleObj(t) { selectedTale = t; goTo(2); }
+function addCustomTale() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+  selectedTale = {id:'custom', title:q, emoji:'✏️', summary:'직접 입력한 동화'};
+  goTo(2);
+}
+
+/* ── 이슈 ── */
+function renderIssues() {
+  document.getElementById('issueGrid').innerHTML = SOCIAL_ISSUES.map(i =>
+    `<div class="issue-item" id="issue_${i.id}" onclick="selectIssue('${i.id}')">
+      <div class="issue-icon">${i.icon}</div>
+      <div><h3>${i.label}</h3><p>${i.desc}</p></div>
+    </div>`).join('');
+}
+function selectIssue(id) {
+  selectedIssue = SOCIAL_ISSUES.find(i=>i.id===id);
+  document.querySelectorAll('.issue-item').forEach(el=>el.classList.remove('selected'));
+  document.getElementById('issue_'+id).classList.add('selected');
+  document.getElementById('btn2next').disabled = false;
+}
+
+/* ── 단계 이동 ── */
+function goTo(step) {
+  [1,2,3,4].forEach(s=>{
+    document.getElementById('step'+s).classList.toggle('hidden', s!==step);
+    const dot = document.getElementById('dot'+s);
+    dot.classList.remove('active','done');
+    if (s < step) dot.classList.add('done');
+    else if (s === step) dot.classList.add('active');
+    if (s < 4) document.getElementById('line'+s).classList.toggle('done', s<step);
+  });
+  if (step===2) renderBadge('badge2',[{label:'원작', val:selectedTale?.title, cls:'red'}]);
+  if (step===3) {
+    renderBadge('badge3',[
+      {label:'원작', val:selectedTale?.title, cls:'red'},
+      {label:'주제', val:selectedIssue?.label, cls:'green'}
+    ]);
+    clearFields();
+    generateExamples();
+  }
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function renderBadge(id, badges) {
+  document.getElementById(id).innerHTML = badges.map(b=>
+    `<span class="badge ${b.cls}"><strong>${b.label}:</strong> ${b.val}</span>`).join('');
+}
+function clearFields() {
+  ['pWho','pWhen','pWhat','pWhy','pHow'].forEach(id=>document.getElementById(id).value='');
+  ['hint_who','hint_when','hint_what','hint_why','hint_how'].forEach(id=>{
+    document.getElementById(id).textContent='';
+    document.getElementById(id).style.opacity='1';
+  });
+  currentExamples=null;
+}
+
+/* ── 예시 생성 → hint에 반투명 표시 ── */
+async function generateExamples() {
+  document.getElementById('exampleLoading').classList.remove('hidden');
+  const prompt=`동화 리메이크 수업 설계 예시를 한국어로 작성해 주세요.
+원작: ${selectedTale.title}
+디지털 사회 문제: ${selectedIssue.label} (${selectedIssue.desc})
+각 항목 1~2문장, 간결하게. 순수 JSON만 (코드블록 없이):
+{"who":"등장인물","when":"배경","what":"주요 사건과 갈등","why":"리메이크 이유","how":"해결과 결말"}`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:600,
+        messages:[{role:'user',content:prompt}]})
+    });
+    const data = await res.json();
+    const text = data.content.map(c=>c.text||'').join('').trim();
+    const s=text.indexOf('{'), e=text.lastIndexOf('}');
+    const ex = JSON.parse(text.slice(s,e+1));
+    currentExamples = ex;
+    setHint('hint_who','pWho',ex.who);
+    setHint('hint_when','pWhen',ex.when);
+    setHint('hint_what','pWhat',ex.what);
+    setHint('hint_why','pWhy',ex.why);
+    setHint('hint_how','pHow',ex.how);
+  } catch(err) {
+    console.error('예시 생성 실패:', err);
+  } finally {
+    document.getElementById('exampleLoading').classList.add('hidden');
+  }
+}
+
+function setHint(hintId, taId, text) {
+  const hint = document.getElementById(hintId);
+  const ta = document.getElementById(taId);
+  hint.textContent = text;
+  const update = () => { hint.style.opacity = ta.value ? '0' : '1'; };
+  ta.addEventListener('input', update);
+  ta.addEventListener('focus', ()=>{ if(!ta.value) hint.style.opacity='0.35'; });
+  ta.addEventListener('blur', update);
+}
+
+/* ── 리메이크 생성 ── */
+async function handleGenerate() {
+  if (!selectedTale||!selectedIssue) return;
+  const who  = document.getElementById('pWho').value  || (currentExamples?.who  ||'');
+  const when = document.getElementById('pWhen').value || (currentExamples?.when ||'');
+  const what = document.getElementById('pWhat').value || (currentExamples?.what ||'');
+  const why  = document.getElementById('pWhy').value  || (currentExamples?.why  ||'');
+  const how  = document.getElementById('pHow').value  || (currentExamples?.how  ||'');
+  showLoading('AI가 이야기를 현대적으로 재해석하고 있습니다...');
+  const prompt=`당신은 어린이와 청소년을 위한 창의적인 동화 작가입니다.
+아래 조건을 바탕으로 원작의 감성을 살리면서도 디지털 사회 문제를 자연스럽게 녹인 리메이크 동화를 써주세요.
+
+[원작] ${selectedTale.title}
+[디지털 사회 문제] ${selectedIssue.label} - ${selectedIssue.desc}
+[등장인물] ${who}
+[배경] ${when}
+[주요 사건] ${what}
+[변화 이유] ${why}
+[해결 및 결말] ${how}
+
+작성 기준:
+- 동화 특유의 따뜻하고 생생한 문체로 쓰세요
+- 기승전결이 분명하고 인물의 감정 변화가 잘 드러나야 합니다
+- 각 단락은 3~5문장 이상으로 충분히 서술하세요
+- 전체 분량: 600~900자 (5~7단락)
+- 디지털 문제를 억지스럽지 않게 이야기 속에 자연스럽게 녹여주세요
+
+출력 규칙: 순수 JSON만, 코드블록 없이. content 안 큰따옴표 금지(작은따옴표만 사용). 줄바꿈은 반드시 \\n 으로만 표현.
+{"newTitle":"리메이크 동화 제목","content":"1단락 내용.\\n\\n2단락 내용.\\n\\n3단락 내용.\\n\\n4단락 내용.\\n\\n5단락 내용.","message":"이 동화가 전하는 교훈 2~3문장.","discussionPoints":["구체적인 토론 질문 1","구체적인 토론 질문 2","구체적인 토론 질문 3"]}`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:3000,
+        messages:[{role:'user',content:prompt}]})
+    });
+    const data = await res.json();
+    let text = data.content.map(c=>c.text||'').join('');
+    let jsonStr = text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+    const s=jsonStr.indexOf('{'), e=jsonStr.lastIndexOf('}');
+    if(s!==-1&&e!==-1) jsonStr=jsonStr.slice(s,e+1);
+    let result;
+    try { result=JSON.parse(jsonStr); }
+    catch {
+      const fixed=jsonStr.replace(/"content"\s*:\s*"([\s\S]*?)(?<!\\)"/g,
+        (_,p1)=>`"content":"${p1.replace(/\n/g,'\\n').replace(/"/g,'\\"')}"`);
+      result=JSON.parse(fixed);
+    }
+    currentResult=result; renderResult(result); goTo(4);
+  } catch(err) {
+    console.error(err); alert('생성 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+  } finally { hideLoading(); }
+}
+
+function renderResult(r) {
+  document.getElementById('resultTitle').value=r.newTitle;
+  renderBadge('badge4',[{label:'원작',val:selectedTale?.title,cls:'red'},{label:'주제',val:selectedIssue?.label,cls:'green'}]);
+  // 삽화 placeholder 먼저 표시
+  document.getElementById('storyIllustration').innerHTML =
+    `<div class="illust-loading"><div class="mini-spinner"></div><span>삽화를 그리고 있습니다...</span></div>`;
+  document.getElementById('storyContent').innerHTML=r.content.split('\n').filter(l=>l.trim()).map(l=>`<p>${l}</p>`).join('');
+  document.getElementById('storyMessage').textContent=r.message;
+  document.getElementById('discussionList').innerHTML=r.discussionPoints.map((q,i)=>
+    `<div class="discussion-item"><div class="discussion-q"><span>${i+1}.</span>${q}</div>
+    <textarea placeholder="나의 의견을 정리해보세요..."></textarea></div>`).join('');
+  // 삽화 비동기 생성
+  generateIllustration(r.newTitle, selectedTale?.title, selectedIssue?.label, r.content.slice(0,200));
+}
+
+async function generateIllustration(title, tale, issue, excerpt) {
+  const prompt = `다음 동화 장면을 묘사하는 SVG 삽화를 만들어주세요.
+동화 제목: ${title}
+원작: ${tale}
+주제: ${issue}
+장면 힌트: ${excerpt}
+
+SVG 조건:
+- viewBox="0 0 600 320"
+- 동화풍 일러스트 스타일 (따뜻한 색감, 단순하고 귀여운 형태)
+- 배경, 주인공, 핵심 소품 등 장면 요소 포함
+- 텍스트 없이 그림만
+- 완전한 SVG 코드만 출력 (<svg ...>...</svg>)`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:2000,
+        messages:[{role:'user',content:prompt}]})
+    });
+    const data = await res.json();
+    const text = data.content.map(c=>c.text||'').join('').trim();
+    const svgStart = text.indexOf('<svg');
+    const svgEnd = text.lastIndexOf('</svg>');
+    if(svgStart!==-1 && svgEnd!==-1) {
+      const svgCode = text.slice(svgStart, svgEnd+6);
+      document.getElementById('storyIllustration').innerHTML =
+        `<div class="illust-wrap">${svgCode}</div>`;
+    } else {
+      document.getElementById('storyIllustration').innerHTML = '';
+    }
+  } catch(e) {
+    document.getElementById('storyIllustration').innerHTML = '';
+  }
+}
+
+function handleStartOver() {
+  selectedTale=null; selectedIssue=null; currentResult=null; currentExamples=null;
+  document.getElementById('searchInput').value='';
+  document.getElementById('clearBtn').style.display='none';
+  clearFields();
+  renderDefault(); renderIssues();
+  document.getElementById('btn2next').disabled=true;
+  goTo(1);
+}
+
+function handleDownloadText() {
+  if(!currentResult) { alert('먼저 동화를 생성해주세요.'); return; }
+  const title = document.getElementById('resultTitle').value || '리메이크동화';
+  const answers = [...document.querySelectorAll('#discussionList textarea')].map((t,i)=>
+    `Q${i+1}. ${currentResult.discussionPoints[i]}\n${t.value||'(미작성)'}`).join('\n\n');
+  const text = `제목: ${title}\n원작: ${selectedTale?.title}\n주제: ${selectedIssue?.label}\n\n[본문]\n${currentResult.content}\n\n[배울 점]\n${currentResult.message}\n\n[토론 활동]\n${answers}`;
+  try {
+    const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = title + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 300);
+  } catch(e) {
+    // 모바일 다운로드 불가 시 텍스트 복사로 대체
+    try {
+      navigator.clipboard.writeText(text).then(()=>alert('📋 텍스트가 클립보드에 복사됐습니다! 메모장에 붙여넣기 하세요.'));
+    } catch(e2) {
+      alert('텍스트 저장이 지원되지 않는 환경입니다.\n\n' + text.slice(0,200) + '...');
+    }
+  }
+}
+
+function handlePrint() {
+  if(!currentResult) { alert('먼저 동화를 생성해주세요.'); return; }
+  window.print();
+}
+
+function showLoading(msg){document.getElementById('loadingText').textContent=msg;document.getElementById('loadingOverlay').classList.remove('hidden');}
+function hideLoading(){document.getElementById('loadingOverlay').classList.add('hidden');}
+
+/* ── 이벤트 ── */
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.trim();
+  document.getElementById('clearBtn').style.display = q ? 'block' : 'none';
+  if (q) renderSearch(q);
+  else renderDefault();
+});
+
+// 초기화
+renderDefault();
+renderIssues();
+</script>
+</body>
+</html>
